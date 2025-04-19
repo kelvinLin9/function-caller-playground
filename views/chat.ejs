@@ -327,6 +327,173 @@
       font-style: italic;
       color: #666;
     }
+
+    /* 語音輸入模式樣式 */
+    .voice-input-container {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      padding: 15px;
+      border-top: 1px solid #e0e0e0;
+    }
+    
+    .voice-buttons {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .voice-input-container.active {
+      display: flex;
+    }
+    
+    .voice-button {
+      flex: 1;
+      padding: 12px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .voice-button:hover {
+      background-color: #2980b9;
+    }
+    
+    .voice-button:disabled {
+      background-color: #95a5a6;
+      cursor: not-allowed;
+    }
+    
+    .voice-record-active {
+      background-color: #e74c3c;
+      animation: pulse 1.5s infinite;
+    }
+    
+    .upload-button {
+      background-color: #27ae60;
+    }
+    
+    .upload-button:hover {
+      background-color: #219653;
+    }
+    
+    .mic-icon, .upload-icon {
+      margin-right: 8px;
+      font-size: 20px;
+    }
+    
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.7; }
+      100% { opacity: 1; }
+    }
+    
+    .voice-status {
+      text-align: center;
+      margin: 10px 0;
+      font-style: italic;
+      color: #7f8c8d;
+    }
+    
+    .voice-transcript {
+      padding: 10px;
+      background-color: #f9f9f9;
+      border-radius: 10px;
+      margin-top: 10px;
+      display: none;
+    }
+    
+    .voice-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    
+    #file-upload-label {
+      flex: 1;
+      padding: 12px;
+      background-color: #27ae60;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 16px;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    #file-upload-label:hover {
+      background-color: #219653;
+    }
+    
+    #audio-file-input {
+      display: none;
+    }
+    
+    .file-name {
+      margin-top: 5px;
+      font-size: 14px;
+      color: #7f8c8d;
+    }
+    
+    /* 拖放上傳區域樣式 */
+    .file-drop-area {
+      margin-top: 15px;
+      border: 2px dashed #3498db;
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      background-color: #f7fbfe;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    
+    .file-drop-area:hover, .file-drop-area.active {
+      background-color: #e1f0fa;
+      border-color: #2980b9;
+    }
+    
+    .file-drop-icon {
+      margin-bottom: 10px;
+    }
+    
+    .file-drop-text {
+      font-size: 16px;
+      font-weight: bold;
+      color: #3498db;
+      margin-bottom: 5px;
+    }
+    
+    .file-drop-subtext {
+      font-size: 14px;
+      color: #7f8c8d;
+    }
+    
+    /* 音訊預覽區域樣式 */
+    .audio-preview {
+      margin-top: 15px;
+      padding: 15px;
+      background-color: #f9f9f9;
+      border-radius: 10px;
+      border: 1px solid #e0e0e0;
+    }
+    
+    .audio-preview audio {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    
+    .audio-controls {
+      display: flex;
+      gap: 10px;
+    }
   </style>
 </head>
 <body>
@@ -338,6 +505,7 @@
         <option value="image">圖片分析模式</option>
         <option value="image-gen">圖片生成模式</option>
         <option value="weather">天氣查詢模式</option>
+        <option value="voice">語音輸入模式</option>
       </select>
     </div>
     
@@ -400,6 +568,55 @@
         </div>
       </div>
     </div>
+    
+    <!-- 語音輸入模式 -->
+    <div class="voice-input-container" id="voice-input-container">
+      <div class="voice-status" id="voice-status">請選擇錄製語音或上傳音訊檔案</div>
+      
+      <div class="voice-buttons">
+        <button id="record-button" class="voice-button">
+          <i class="mic-icon">🎤</i> 開始錄音
+        </button>
+        <label id="file-upload-label" for="audio-file-input" class="voice-button upload-button">
+          <i class="upload-icon">📂</i> 上傳音訊檔案
+        </label>
+        <input type="file" id="audio-file-input" accept="audio/*">
+      </div>
+      
+      <div class="file-name" id="file-name"></div>
+      
+      <!-- 添加拖放上傳區域 -->
+      <div class="file-drop-area" id="file-drop-area">
+        <div class="file-drop-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 16L12 8" stroke="#3498db" stroke-width="2" stroke-linecap="round"/>
+            <path d="M9 11L12 8L15 11" stroke="#3498db" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20 16.7428C21.2215 15.734 22 14.2079 22 12.5C22 9.46243 19.5376 7 16.5 7C16.2815 7 16.0771 6.886 15.9661 6.69774C14.6621 4.48484 12.2544 3 9.5 3C5.35786 3 2 6.35786 2 10.5C2 12.5661 2.83545 14.4371 4.18695 15.7935" stroke="#3498db" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8 16H16" stroke="#3498db" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8 19H16" stroke="#3498db" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="file-drop-text">將音訊檔案拖放至此處</div>
+        <div class="file-drop-subtext">支援 MP3, WAV, M4A 等音訊格式 (最大25MB)</div>
+      </div>
+      
+      <!-- 添加音訊預覽區域 -->
+      <div class="audio-preview" id="audio-preview" style="display: none;">
+        <audio id="audio-player" controls></audio>
+        <div class="audio-controls">
+          <button id="upload-audio-button" class="voice-button">上傳此音訊</button>
+          <button id="cancel-audio-button" class="voice-button">取消</button>
+        </div>
+      </div>
+      
+      <div class="voice-transcript" id="voice-transcript" style="display: none;">
+        <p id="transcript-text"></p>
+        <div class="voice-actions">
+          <button id="send-transcript" class="voice-button">發送至聊天</button>
+          <button id="clear-transcript" class="voice-button">清除</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -424,6 +641,30 @@
       const weatherCard = document.getElementById('weather-card');
       let chatHistory = [];
       
+      // 語音輸入模式變數
+      const voiceInputContainer = document.getElementById('voice-input-container');
+      const recordButton = document.getElementById('record-button');
+      const fileUploadInput = document.getElementById('audio-file-input');
+      const fileNameDisplay = document.getElementById('file-name');
+      const voiceStatus = document.getElementById('voice-status');
+      const voiceTranscript = document.getElementById('voice-transcript');
+      const transcriptText = document.getElementById('transcript-text');
+      const sendTranscriptButton = document.getElementById('send-transcript');
+      const clearTranscriptButton = document.getElementById('clear-transcript');
+      
+      // 新增拖放上傳相關變數
+      const fileDropArea = document.getElementById('file-drop-area');
+      const audioPreview = document.getElementById('audio-preview');
+      const audioPlayer = document.getElementById('audio-player');
+      const uploadAudioButton = document.getElementById('upload-audio-button');
+      const cancelAudioButton = document.getElementById('cancel-audio-button');
+      
+      // 錄音相關變數
+      let mediaRecorder;
+      let audioChunks = [];
+      let isRecording = false;
+      let audioFile = null; // 儲存預覽的音訊檔案
+      
       // 切換模式
       modeSelector.addEventListener('change', function() {
         // 隱藏所有輸入區域
@@ -431,6 +672,7 @@
         imageInputContainer.classList.remove('active');
         imageGenerationContainer.classList.remove('active');
         weatherContainer.classList.remove('active');
+        voiceInputContainer.classList.remove('active');
         
         // 顯示選中的輸入區域
         if (this.value === 'chat') {
@@ -441,6 +683,8 @@
           imageGenerationContainer.classList.add('active');
         } else if (this.value === 'weather') {
           weatherContainer.classList.add('active');
+        } else if (this.value === 'voice') {
+          voiceInputContainer.classList.add('active');
         }
       });
       
@@ -870,6 +1114,259 @@
       
       // 設置初始模式
       chatInput.classList.add('active');
+      
+      // 檢查初始模式
+      function checkInitialMode() {
+        const currentMode = modeSelector.value;
+        
+        // 隱藏所有輸入區域
+        chatInput.classList.remove('active');
+        imageInputContainer.classList.remove('active');
+        imageGenerationContainer.classList.remove('active');
+        weatherContainer.classList.remove('active');
+        voiceInputContainer.classList.remove('active');
+        
+        // 顯示選中的輸入區域
+        if (currentMode === 'chat') {
+          chatInput.classList.add('active');
+        } else if (currentMode === 'image') {
+          imageInputContainer.classList.add('active');
+        } else if (currentMode === 'image-gen') {
+          imageGenerationContainer.classList.add('active');
+        } else if (currentMode === 'weather') {
+          weatherContainer.classList.add('active');
+        } else if (currentMode === 'voice') {
+          voiceInputContainer.classList.add('active');
+        }
+      }
+      
+      // 初始檢查
+      checkInitialMode();
+      
+      // 處理音頻文件上傳
+      fileUploadInput.addEventListener('change', function(e) {
+        if (this.files.length > 0) {
+          const file = this.files[0];
+          handleAudioFile(file);
+        }
+      });
+      
+      // 拖放功能：拖入文件
+      fileDropArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.classList.add('active');
+      });
+      
+      // 拖放功能：離開拖放區域
+      fileDropArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        this.classList.remove('active');
+      });
+      
+      // 拖放功能：放下文件
+      fileDropArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.classList.remove('active');
+        
+        if (e.dataTransfer.files.length > 0) {
+          const file = e.dataTransfer.files[0];
+          handleAudioFile(file);
+        }
+      });
+      
+      // 點擊拖放區域觸發文件上傳
+      fileDropArea.addEventListener('click', function() {
+        fileUploadInput.click();
+      });
+      
+      // 處理音訊檔案（預覽與驗證）
+      function handleAudioFile(file) {
+        // 檢查文件是否為音頻文件
+        if (!file.type.startsWith('audio/')) {
+          alert('請上傳音頻文件');
+          fileUploadInput.value = '';
+          return;
+        }
+        
+        // 檢查文件大小
+        if (file.size > 25 * 1024 * 1024) { // 25MB
+          alert('文件大小不能超過25MB');
+          fileUploadInput.value = '';
+          return;
+        }
+        
+        // 儲存檔案供後續上傳
+        audioFile = file;
+        
+        // 顯示文件名
+        fileNameDisplay.textContent = `已選擇: ${file.name}`;
+        voiceStatus.textContent = '已選擇音訊檔案，可以預覽或上傳';
+        
+        // 顯示音訊預覽
+        const audioURL = URL.createObjectURL(file);
+        audioPlayer.src = audioURL;
+        audioPreview.style.display = 'block';
+      }
+      
+      // 上傳預覽中的音訊
+      uploadAudioButton.addEventListener('click', function() {
+        if (audioFile) {
+          uploadAudioFile(audioFile);
+          audioPreview.style.display = 'none';
+        }
+      });
+      
+      // 取消上傳
+      cancelAudioButton.addEventListener('click', function() {
+        audioPreview.style.display = 'none';
+        audioPlayer.src = '';
+        fileNameDisplay.textContent = '';
+        voiceStatus.textContent = '請選擇錄製語音或上傳音訊檔案';
+        fileUploadInput.value = '';
+        audioFile = null;
+      });
+      
+      // 上傳音頻文件到服務器
+      async function uploadAudioFile(file) {
+        try {
+          // 更新狀態
+          voiceStatus.textContent = '正在轉錄音頻...';
+          
+          // 創建表單數據
+          const formData = new FormData();
+          formData.append('audio', file);
+          
+          // 發送請求
+          const response = await fetch('/api/transcribe', {
+            method: 'POST',
+            body: formData
+          });
+          
+          if (!response.ok) {
+            throw new Error('上傳失敗');
+          }
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            // 顯示轉錄結果
+            voiceStatus.textContent = '音頻轉錄完成';
+            displayTranscript(data.text);
+          } else {
+            voiceStatus.textContent = `轉錄失敗: ${data.error}`;
+          }
+        } catch (error) {
+          console.error('上傳或轉錄錯誤:', error);
+          voiceStatus.textContent = `發生錯誤: ${error.message}`;
+        }
+      }
+      
+      // 顯示轉錄結果
+      function displayTranscript(text) {
+        transcriptText.textContent = text;
+        voiceTranscript.style.display = 'block';
+      }
+      
+      // 發送轉錄文本到聊天
+      sendTranscriptButton.addEventListener('click', function() {
+        const text = transcriptText.textContent.trim();
+        if (text) {
+          // 切換到聊天模式
+          modeSelector.value = 'chat';
+          chatInput.classList.add('active');
+          voiceInputContainer.classList.remove('active');
+          
+          // 設置輸入框文本
+          messageInput.value = text;
+          
+          // 發送消息
+          sendMessage();
+          
+          // 清除轉錄
+          clearTranscript();
+        }
+      });
+      
+      // 清除轉錄
+      clearTranscriptButton.addEventListener('click', clearTranscript);
+      
+      function clearTranscript() {
+        transcriptText.textContent = '';
+        voiceTranscript.style.display = 'none';
+        fileNameDisplay.textContent = '';
+        voiceStatus.textContent = '請選擇錄製語音或上傳音訊檔案';
+        fileUploadInput.value = '';
+      }
+      
+      // 錄音按鈕事件
+      recordButton.addEventListener('click', async function() {
+        if (!isRecording) {
+          // 開始錄音
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            startRecording(stream);
+          } catch (err) {
+            console.error('錄音錯誤:', err);
+            voiceStatus.textContent = '無法訪問麥克風，請檢查權限設置';
+          }
+        } else {
+          // 停止錄音
+          stopRecording();
+        }
+      });
+      
+      // 開始錄音
+      function startRecording(stream) {
+        // 重置
+        audioChunks = [];
+        
+        // 創建 MediaRecorder
+        mediaRecorder = new MediaRecorder(stream);
+        
+        // 收集音頻數據
+        mediaRecorder.addEventListener('dataavailable', event => {
+          audioChunks.push(event.data);
+        });
+        
+        // 錄音結束時的處理
+        mediaRecorder.addEventListener('stop', () => {
+          // 合併音頻片段
+          const audioBlob = new Blob(audioChunks, { type: 'audio/mpeg' });
+          
+          // 創建檔案物件
+          const filename = `recording_${new Date().toISOString()}.mp3`;
+          const file = new File([audioBlob], filename, { type: 'audio/mpeg' });
+          
+          // 更新狀態
+          isRecording = false;
+          recordButton.textContent = '開始錄音';
+          recordButton.classList.remove('voice-record-active');
+          
+          // 顯示文件名和預覽
+          handleAudioFile(file);
+        });
+        
+        // 開始錄音
+        mediaRecorder.start();
+        isRecording = true;
+        
+        // 更新 UI
+        recordButton.textContent = '停止錄音';
+        recordButton.classList.add('voice-record-active');
+        voiceStatus.textContent = '正在錄音...';
+      }
+      
+      // 停止錄音
+      function stopRecording() {
+        if (mediaRecorder && isRecording) {
+          mediaRecorder.stop();
+          
+          // 關閉所有跟音訊相關的軌道
+          mediaRecorder.stream.getTracks().forEach(track => track.stop());
+          
+          voiceStatus.textContent = '處理錄音中...';
+        }
+      }
     });
   </script>
 </body>
