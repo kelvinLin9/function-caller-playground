@@ -5,6 +5,7 @@
 const express = require('express');
 const router = express.Router();
 const aiController = require('../controllers/aiController');
+const weatherController = require('../controllers/weatherController');
 
 // 聊天頁面路由
 router.get('/chat-ui', (req, res) => {
@@ -20,5 +21,8 @@ router.get('/chat', aiController.processChat);
 
 // 圖片生成 API 端點
 router.post('/image-generation', aiController.createImage);
+
+// 天氣查詢 API 端點
+router.post('/weather/query', weatherController.queryWeather);
 
 module.exports = router; 
