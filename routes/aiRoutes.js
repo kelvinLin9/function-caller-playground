@@ -18,4 +18,7 @@ router.post('/image-analysis', aiController.analyzeImage);
 router.post('/chat', aiController.processChat);
 router.get('/chat', aiController.processChat);
 
+// 圖片生成 API 端點
+router.post('/image-generation', aiController.createImage);
+
 module.exports = router; 

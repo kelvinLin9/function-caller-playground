@@ -153,8 +153,60 @@
       display: none;
     }
     
+    .image-generation-container {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      padding: 15px;
+      border-top: 1px solid #e0e0e0;
+    }
+    
+    .image-generation-row {
+      display: flex;
+      gap: 10px;
+    }
+    
+    #image-prompt {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      outline: none;
+      font-size: 16px;
+    }
+    
+    .size-selector {
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      outline: none;
+      font-size: 14px;
+      color: #333;
+    }
+    
+    #generate-button {
+      padding: 12px 20px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    
+    #generate-button:hover {
+      background-color: #2980b9;
+    }
+    
     .active {
       display: flex;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 20px;
+      font-style: italic;
+      color: #666;
     }
   </style>
 </head>
@@ -165,6 +217,7 @@
       <select id="mode-selector" class="mode-selector">
         <option value="chat">聊天模式</option>
         <option value="image">圖片分析模式</option>
+        <option value="image-gen">圖片生成模式</option>
       </select>
     </div>
     
@@ -190,6 +243,20 @@
       </div>
       <img id="image-preview" class="image-preview" alt="圖片預覽">
     </div>
+    
+    <div class="image-generation-container" id="image-generation-container">
+      <div class="image-generation-row">
+        <input type="text" id="image-prompt" placeholder="描述您想要生成的圖片..." autocomplete="off">
+      </div>
+      <div class="image-generation-row">
+        <select id="size-selector" class="size-selector">
+          <option value="1024x1024">正方形 (1024x1024)</option>
+          <option value="1024x1792">豎向 (1024x1792)</option>
+          <option value="1792x1024">橫向 (1792x1024)</option>
+        </select>
+        <button id="generate-button">生成圖片</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -204,16 +271,26 @@
       const imageQuestion = document.getElementById('image-question');
       const analyzeButton = document.getElementById('analyze-button');
       const imagePreview = document.getElementById('image-preview');
+      const imageGenerationContainer = document.getElementById('image-generation-container');
+      const imagePrompt = document.getElementById('image-prompt');
+      const sizeSelector = document.getElementById('size-selector');
+      const generateButton = document.getElementById('generate-button');
       let chatHistory = [];
       
       // 切換模式
       modeSelector.addEventListener('change', function() {
+        // 隱藏所有輸入區域
+        chatInput.classList.remove('active');
+        imageInputContainer.classList.remove('active');
+        imageGenerationContainer.classList.remove('active');
+        
+        // 顯示選中的輸入區域
         if (this.value === 'chat') {
           chatInput.classList.add('active');
-          imageInputContainer.classList.remove('active');
-        } else {
-          chatInput.classList.remove('active');
+        } else if (this.value === 'image') {
           imageInputContainer.classList.add('active');
+        } else if (this.value === 'image-gen') {
+          imageGenerationContainer.classList.add('active');
         }
       });
       
@@ -345,6 +422,59 @@
         }
       });
       
+      // 生成圖片
+      generateButton.addEventListener('click', async function() {
+        const prompt = imagePrompt.value.trim();
+        const size = sizeSelector.value;
+        
+        if (!prompt) {
+          alert('請輸入圖片描述');
+          return;
+        }
+        
+        // 添加用戶訊息到聊天框
+        addMessage(`生成圖片: ${prompt}`, 'user');
+        
+        try {
+          // 顯示 AI 正在生成圖片
+          const thinkingId = showThinking('正在生成圖片，這可能需要一些時間...');
+          
+          // 發送請求到 API
+          const response = await fetch('/api/image-generation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              prompt: prompt, 
+              size: size 
+            })
+          });
+          
+          // 移除思考中訊息
+          removeThinking(thinkingId);
+          
+          if (!response.ok) {
+            throw new Error('生成圖片失敗');
+          }
+          
+          const data = await response.json();
+          
+          // 添加生成的圖片到聊天框
+          addImageMessage(data.image_url, 'ai');
+          
+          // 添加修改後的提示詞到聊天框
+          if (data.revised_prompt) {
+            addMessage(`我基於您的描述生成了圖片。\n\n最終使用的提示詞: ${data.revised_prompt}`, 'ai');
+          }
+          
+          // 清空輸入
+          imagePrompt.value = '';
+          
+        } catch (error) {
+          console.error('錯誤:', error);
+          addMessage('抱歉，生成圖片時發生錯誤。請稍後再試。', 'ai');
+        }
+      });
+      
       // 發送聊天訊息函數
       async function sendMessage() {
         const message = messageInput.value.trim();
@@ -439,10 +569,10 @@
       }
       
       // 顯示思考中的訊息
-      function showThinking() {
+      function showThinking(message = '思考中...') {
         const thinkingDiv = document.createElement('div');
         thinkingDiv.className = 'message ai-message thinking';
-        thinkingDiv.innerHTML = '<div class="message-content">思考中...</div>';
+        thinkingDiv.innerHTML = `<div class="message-content">${message}</div>`;
         chatMessages.appendChild(thinkingDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
         return thinkingDiv.id = 'thinking-' + Date.now();

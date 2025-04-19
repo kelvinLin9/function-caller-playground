@@ -3,7 +3,7 @@
  * 處理與 AI 相關的 API 請求
  */
 
-const { processImageQuery, processChatQuery } = require('../models/aiModel');
+const { processImageQuery, processChatQuery, generateImage } = require('../models/aiModel');
 
 /**
  * 處理圖片分析請求
@@ -69,7 +69,36 @@ async function processChat(req, res) {
   }
 }
 
+/**
+ * 處理圖片生成請求
+ * @param {Object} req - Express 請求對象
+ * @param {Object} res - Express 回應對象
+ */
+async function createImage(req, res) {
+  try {
+    const { prompt, size } = req.body;
+
+    if (!prompt) {
+      return res.status(400).json({ error: "請提供圖片描述提示" });
+    }
+
+    const validSizes = ["1024x1024", "1024x1792", "1792x1024"];
+    const imageSize = validSizes.includes(size) ? size : "1024x1024";
+
+    const result = await generateImage(prompt, imageSize);
+
+    res.json({
+      image_url: result.url,
+      revised_prompt: result.revised_prompt,
+    });
+  } catch (error) {
+    console.error("圖片生成 API 錯誤:", error);
+    res.status(500).json({ error: error.message || "生成圖片時發生錯誤" });
+  }
+}
+
 module.exports = {
   analyzeImage,
-  processChat
+  processChat,
+  createImage
 }; 

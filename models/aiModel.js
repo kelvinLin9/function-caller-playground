@@ -72,7 +72,43 @@ async function processChatQuery(message, history = []) {
   }
 }
 
+/**
+ * 生成圖片
+ * @param {string} prompt - 圖片描述提示
+ * @param {string} size - 圖片尺寸
+ * @returns {Promise<Object>} - 包含生成圖片URL和修改後提示詞的對象
+ */
+async function generateImage(prompt, size = "1024x1024") {
+  try {
+    console.log(`生成圖片: "${prompt}", 尺寸: ${size}`);
+
+    const response = await openai.images.generate({
+      model: "dall-e-3",
+      prompt: prompt,
+      n: 1,
+      size: size,
+      quality: "standard",
+    });
+
+    console.log("圖片生成回應:", response);
+
+    // 回傳生成的圖片URL
+    if (response.data && response.data.length > 0) {
+      return {
+        url: response.data[0].url,
+        revised_prompt: response.data[0].revised_prompt,
+      };
+    } else {
+      throw new Error("無法生成圖片");
+    }
+  } catch (error) {
+    console.error("生成圖片出錯:", error);
+    throw error;
+  }
+}
+
 module.exports = {
   processImageQuery,
-  processChatQuery
+  processChatQuery,
+  generateImage
 }; 
